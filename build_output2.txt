@@ -1,0 +1,24 @@
+
+> Configure project :app
+e: file:///C:/Users/Nam_Nguyen/AndroidStudioProjects/EnglishUP/app/build.gradle.kts:57:5: Unresolved reference 'kapt'.
+
+FAILURE: Build failed with an exception.
+
+* Where:
+Build file 'C:\Users\Nam_Nguyen\AndroidStudioProjects\EnglishUP\app\build.gradle.kts' line: 57
+
+* What went wrong:
+Script compilation error:
+
+  Line 57:     kapt(libs.androidx.room.compiler)
+               ^ Unresolved reference 'kapt'.
+
+1 error
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights from a Build Scan (powered by Develocity).
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 4s
