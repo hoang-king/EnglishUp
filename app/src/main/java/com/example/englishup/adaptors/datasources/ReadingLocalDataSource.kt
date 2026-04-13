@@ -1,5 +1,7 @@
-package com.example.englishup.adaptors.datasources
+package com.example.englishup.adaptors.datasources.local
 
+import com.example.englishup.adaptors.datasources.local.Dao.ReadingDao
+import com.example.englishup.adaptors.datasources.local.Dto.ReadingDto
 import javax.inject.Inject
 
 interface ReadingLocalDataSource {
@@ -7,15 +9,15 @@ interface ReadingLocalDataSource {
     suspend fun saveReadingList(list: List<ReadingDto>)
 }
 
-class ReadingLocalDataSourceImpl @Inject constructor() : ReadingLocalDataSource {
-    private var cache = mutableListOf<ReadingDto>()
+class ReadingLocalDataSourceImpl @Inject constructor(
+    private val readingDao: ReadingDao
+) : ReadingLocalDataSource {
 
     override suspend fun getReadingList(): List<ReadingDto> {
-        return cache
+        return readingDao.getAll()
     }
 
     override suspend fun saveReadingList(list: List<ReadingDto>) {
-        cache.clear()
-        cache.addAll(list)
+        readingDao.insertAll(list)
     }
 }

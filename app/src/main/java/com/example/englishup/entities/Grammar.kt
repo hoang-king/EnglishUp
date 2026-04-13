@@ -1,11 +1,7 @@
-package com.example.englishup.adaptors.datasources.local.Dto
+package com.example.englishup.entities
 
-import androidx.room.Entity
-import androidx.room.PrimaryKey
-
-@Entity(tableName = "grammar")
-data class GrammarDto(
-    @PrimaryKey val id: String,
+data class Grammar(
+    val id: String,
     val category: String,         // Ví dụ: "Thì động từ"
     val question: String,         // Nội dung câu hỏi
     val context: String,          // Ngữ cảnh (ví dụ: "Business email...")

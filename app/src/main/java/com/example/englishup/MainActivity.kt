@@ -66,7 +66,15 @@ class MainActivity : ComponentActivity() {
                     ) {
                         composable(Screen.Home.route) {
                             HomeScreen(
-                                onNavigateToVocab = { navController.navigate(Screen.Vocabulary.route) },
+                                onNavigateToVocab = { 
+                                    navController.navigate(Screen.Vocabulary.route) {
+                                        popUpTo(navController.graph.findStartDestination().id) {
+                                            saveState = true
+                                        }
+                                        launchSingleTop = true
+                                        restoreState = true
+                                    }
+                                },
                                 onNavigateToGrammar = { navController.navigate(Screen.Grammar.route) },
                                 onNavigateToReading = { navController.navigate(Screen.Reading.route) },
                                 onNavigateToListening = { navController.navigate(Screen.Listening.route) },

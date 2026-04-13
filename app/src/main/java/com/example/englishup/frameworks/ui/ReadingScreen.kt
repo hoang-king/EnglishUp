@@ -19,10 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -96,6 +93,9 @@ fun ReadingLessonList(
 
 @Composable
 fun ReadingDetailView(lesson: Reading, onBack: () -> Unit) {
+    var selectedAnswers by remember { mutableStateOf(mapOf<Int, Int>()) }
+    var showResults by remember { mutableStateOf(false) }
+
     Column(
         modifier = Modifier.fillMaxSize().background(Bg2).verticalScroll(rememberScrollState())
     ) {
@@ -115,7 +115,7 @@ fun ReadingDetailView(lesson: Reading, onBack: () -> Unit) {
 
         // ── Passage ──
         Column(
-            Modifier.fillMaxWidth().padding(horizontal = 20.dp).padding(bottom = 16.dp)
+            Modifier.fillMaxWidth().padding(horizontal = 20.dp).padding(bottom = 20.dp)
                 .clip(RoundedCornerShape(16.dp)).background(Surface)
                 .border(1.dp, Border, RoundedCornerShape(16.dp))
         ) {
@@ -133,11 +133,62 @@ fun ReadingDetailView(lesson: Reading, onBack: () -> Unit) {
                 Text(lesson.content, style = MaterialTheme.typography.bodyMedium, color = TextSecondary, lineHeight = 22.sp)
             }
         }
+
+        // ── Questions ──
+        if (lesson.questions.isNotEmpty()) {
+            Column(Modifier.padding(horizontal = 20.dp).padding(bottom = 24.dp)) {
+                Text("Câu hỏi kiểm tra", style = MaterialTheme.typography.titleMedium)
+                Spacer(Modifier.height(14.dp))
+                
+                lesson.questions.forEachIndexed { index, q ->
+                    val selected = selectedAnswers[index] ?: -1
+                    val correctIdx = q.options.indexOf(q.correctAnswer)
+                    
+                    ReadingQuestionCard(
+                        num = "Câu ${index + 1}",
+                        question = q.question,
+                        options = q.options,
+                        selected = selected,
+                        correctOption = correctIdx,
+                        showResult = showResults,
+                        onSelect = { if (!showResults) selectedAnswers = selectedAnswers + (index to it) }
+                    )
+                    Spacer(Modifier.height(12.dp))
+                }
+
+                Spacer(Modifier.height(12.dp))
+                Button(
+                    onClick = { 
+                        if (showResults) {
+                            // Reset
+                            selectedAnswers = emptyMap()
+                            showResults = false
+                        } else {
+                            showResults = true
+                        }
+                    },
+                    enabled = selectedAnswers.size == lesson.questions.size || showResults,
+                    colors = ButtonDefaults.buttonColors(containerColor = if (showResults) Blue else Green),
+                    modifier = Modifier.fillMaxWidth().height(50.dp),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text(if (showResults) "Làm lại" else "Kiểm tra đáp án", fontWeight = FontWeight.Bold, color = Bg)
+                }
+            }
+        }
     }
 }
 
 @Composable
-private fun ReadingQuestionCard(num: String, question: String, options: List<String>, selected: Int, onSelect: (Int) -> Unit) {
+private fun ReadingQuestionCard(
+    num: String, 
+    question: String, 
+    options: List<String>, 
+    selected: Int, 
+    correctOption: Int,
+    showResult: Boolean,
+    onSelect: (Int) -> Unit
+) {
     val letters = listOf("A", "B", "C", "D")
     Column(
         Modifier.fillMaxWidth().background(Surface, RoundedCornerShape(10.dp))
@@ -147,23 +198,55 @@ private fun ReadingQuestionCard(num: String, question: String, options: List<Str
         Spacer(Modifier.height(8.dp))
         Text(question, style = MaterialTheme.typography.titleSmall, lineHeight = 18.sp)
         Spacer(Modifier.height(10.dp))
+        
         options.forEachIndexed { i, opt ->
             val isSelected = i == selected
+            val isCorrect = i == correctOption
+            
+            val backgroundColor = when {
+                showResult && isCorrect -> GreenDim
+                showResult && isSelected && !isCorrect -> RedDim
+                isSelected -> BlueDim
+                else -> Bg3
+            }
+            
+            val borderColor = when {
+                showResult && isCorrect -> Green
+                showResult && isSelected && !isCorrect -> Red
+                isSelected -> Blue
+                else -> Color.Transparent
+            }
+
+            val contentColor = when {
+                showResult && isCorrect -> Green
+                showResult && isSelected && !isCorrect -> Red
+                isSelected -> Blue
+                else -> TextPrimary
+            }
+
             Row(
                 Modifier.fillMaxWidth().padding(bottom = 6.dp)
                     .clip(RoundedCornerShape(6.dp))
-                    .background(if (isSelected) BlueDim else Bg3)
-                    .border(1.dp, if (isSelected) Blue else androidx.compose.ui.graphics.Color.Transparent, RoundedCornerShape(6.dp))
-                    .clickable { onSelect(i) }.padding(9.dp, 9.dp),
+                    .background(backgroundColor)
+                    .border(1.dp, borderColor, RoundedCornerShape(6.dp))
+                    .clickable(enabled = !showResult) { onSelect(i) }
+                    .padding(12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Box(
-                    Modifier.size(18.dp).clip(RoundedCornerShape(4.dp))
-                        .background(if (isSelected) Blue else Border),
+                    Modifier.size(24.dp).clip(RoundedCornerShape(6.dp))
+                        .background(if (isSelected || (showResult && isCorrect)) contentColor else Border),
                     contentAlignment = Alignment.Center
-                ) { Text(letters[i], fontSize = 10.sp, fontWeight = FontWeight.Bold, color = if (isSelected) TextPrimary else TextPrimary) }
-                Spacer(Modifier.width(8.dp))
-                Text(opt, style = MaterialTheme.typography.bodySmall, color = if (isSelected) Blue else TextPrimary)
+                ) {
+                    Text(
+                        letters[i], 
+                        fontSize = 12.sp, 
+                        fontWeight = FontWeight.Bold, 
+                        color = if (isSelected || (showResult && isCorrect)) Bg else TextPrimary
+                    )
+                }
+                Spacer(Modifier.width(12.dp))
+                Text(opt, style = MaterialTheme.typography.bodySmall, color = contentColor)
             }
         }
     }
